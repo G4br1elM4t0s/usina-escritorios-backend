@@ -99,11 +99,13 @@ export const officeService = {
       data: {
         number: data.number,
         companyName: data.companyName,
-        owners: data.ownerId ? {
-          create: [{
-            userId: data.ownerId
-          }]
-        } : undefined
+        ...(data.ownerId && {
+          owners: {
+            create: {
+              userId: data.ownerId
+            }
+          }
+        })
       },
       select: {
         ...fullOfficeSelect,
@@ -154,12 +156,14 @@ export const officeService = {
       where: { id },
       data: {
         ...data,
-        owners: data.ownerId ? {
-          deleteMany: {},
-          create: [{
-            userId: data.ownerId
-          }]
-        } : undefined
+        ...(data.ownerId && {
+          owners: {
+            deleteMany: {},
+            create: {
+              userId: data.ownerId
+            }
+          }
+        })
       },
       select: {
         ...fullOfficeSelect,
