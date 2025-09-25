@@ -79,9 +79,10 @@
         }
       },
       "post": {
+        "security": [{"bearerAuth": []}],
         "tags": ["Usuários"],
         "summary": "Criar usuário",
-        "description": "Cria um novo usuário",
+        "description": "Cria um novo usuário (requer autenticação como ADMIN)",
         "requestBody": {
           "required": true,
           "content": {
@@ -306,13 +307,9 @@
       "bearerAuth": {
         "type": "http",
         "scheme": "bearer",
-        "bearerFormat": "JWT"
+        "bearerFormat": "JWT",
+        "description": "JWT token obtido na rota de login. Use o formato: Bearer <token>"
       }
     }
-  },
-  "security": [
-    {
-      "bearerAuth": []
-    }
-  ]
+  }
 }

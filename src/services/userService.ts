@@ -59,7 +59,10 @@ export const userService = {
     // Criar usuário
     const user = await prisma.user.create({
       data: {
-        ...data,
+        name: data.name,
+        email: data.email,
+        role: data.role,
+        isActive: data.isActive,
         passwordHash,
       },
       select: {

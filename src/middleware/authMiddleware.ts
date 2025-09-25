@@ -22,18 +22,31 @@ export const authenticate = (
   // Get token from header
   const authHeader = req.headers.authorization;
   
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  if (!authHeader) {
     throw new AppError('Authentication required', 401);
   }
   
-  const token = authHeader.split(' ')[1];
+  // Accept both 'Bearer token' format and direct token
+  const token = authHeader.startsWith('Bearer ') 
+    ? authHeader.split(' ')[1] 
+    : authHeader;
+  
+  if (!token) {
+    throw new AppError('Token não fornecido', 401);
+  }
   
   try {
+    console.log('Auth header:', authHeader);
+    console.log('Token before trim:', token);
+    console.log('Token after trim:', token.trim());
+    
     // Verify token
     const decoded = jwt.verify(
-      token,
+      token.trim(),
       (process.env.JWT_SECRET || 'fallback-secret-key') as Secret
     ) as { userId: string; role: string };
+    
+    console.log('Decoded token:', decoded);
     
     // Add user to request
     req.user = {
@@ -42,6 +55,8 @@ export const authenticate = (
     };
     next();
   } catch (error) {
-    throw new AppError('Invalid token', 401);
+    console.log('Token error:', error);
+    console.log('Token received:', token);
+    throw new AppError(`Token inválido: ${error.message}`, 401);
   }
 };
