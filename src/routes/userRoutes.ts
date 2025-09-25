@@ -6,9 +6,9 @@ import { checkAdminRole, checkCreateUserPermission } from '../middleware/checkRo
 const router = Router();
 
 // Rotas do CRUD de usuários
-router.get('/', authenticate, userController.index);
-router.get('/:id', authenticate, userController.show);
-router.post('/', authenticate, checkCreateUserPermission, userController.create);
+router.get('/', authenticate, checkAdminRole, userController.index);
+router.get('/:id', authenticate, checkAdminRole, userController.show);
+router.post('/', authenticate, checkAdminRole, userController.create);
 router.put('/:id', authenticate, checkAdminRole, userController.update);
 router.delete('/:id', authenticate, checkAdminRole, userController.delete);
 

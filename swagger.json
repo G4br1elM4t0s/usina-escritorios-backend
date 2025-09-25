@@ -61,7 +61,7 @@
         "security": [{"bearerAuth": []}],
         "tags": ["Usuários"],
         "summary": "Listar usuários",
-        "description": "Retorna a lista de todos os usuários",
+        "description": "Retorna a lista de todos os usuários (requer autenticação como ADMIN)",
         "responses": {
           "200": {
             "description": "Lista de usuários retornada com sucesso",
@@ -126,7 +126,7 @@
         "security": [{"bearerAuth": []}],
         "tags": ["Usuários"],
         "summary": "Buscar usuário por ID",
-        "description": "Retorna os dados de um usuário específico",
+        "description": "Retorna os dados de um usuário específico (requer autenticação como ADMIN)",
         "responses": {
           "200": {
             "description": "Usuário encontrado com sucesso",
@@ -147,7 +147,7 @@
         "security": [{"bearerAuth": []}],
         "tags": ["Usuários"],
         "summary": "Atualizar usuário",
-        "description": "Atualiza os dados de um usuário específico",
+        "description": "Atualiza os dados de um usuário específico (requer autenticação como ADMIN)",
         "requestBody": {
           "required": true,
           "content": {
@@ -181,7 +181,7 @@
         "security": [{"bearerAuth": []}],
         "tags": ["Usuários"],
         "summary": "Excluir usuário",
-        "description": "Realiza a exclusão lógica de um usuário",
+        "description": "Realiza a exclusão lógica de um usuário (requer autenticação como ADMIN)",
         "responses": {
           "200": {
             "description": "Usuário excluído com sucesso"
