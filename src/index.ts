@@ -8,6 +8,7 @@ import swaggerDocument from '../swagger.json';
 
 import authRoutes from './routes/authRoutes';
 import userRoutes from './routes/userRoutes';
+import officeRoutes from './routes/officeRoutes';
 import { errorHandler } from './middleware/errorHandler';
 import { requestLogger } from './middleware/requestLogger';
 
@@ -30,6 +31,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 // Routes
 app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/offices', officeRoutes);
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });

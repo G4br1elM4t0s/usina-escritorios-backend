@@ -12,6 +12,261 @@
     }
   ],
   "paths": {
+    "/api/offices": {
+      "get": {
+        "tags": ["Escritórios"],
+        "summary": "Listar escritórios",
+        "description": "Retorna a lista de escritórios. Acesso público com dados básicos, dados completos para ADMIN.",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Número da página",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "perPage",
+            "in": "query",
+            "description": "Itens por página",
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "description": "Termo de busca",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "includeDeleted",
+            "in": "query",
+            "description": "Incluir escritórios deletados (apenas ADMIN)",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de escritórios retornada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/OfficeResponse"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "page": {
+                          "type": "integer"
+                        },
+                        "perPage": {
+                          "type": "integer"
+                        },
+                        "total": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "security": [{"bearerAuth": []}],
+        "tags": ["Escritórios"],
+        "summary": "Criar escritório",
+        "description": "Cria um novo escritório (requer autenticação como ADMIN)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOfficeInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Escritório criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/OfficeResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados de entrada inválidos"
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Não autorizado"
+          }
+        }
+      }
+    },
+    "/api/offices/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "ID do escritório",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "get": {
+        "tags": ["Escritórios"],
+        "summary": "Buscar escritório por ID",
+        "description": "Retorna os dados de um escritório específico. Acesso público com dados básicos, dados completos para ADMIN e OFFICE_OWNER do escritório.",
+        "responses": {
+          "200": {
+            "description": "Escritório encontrado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/OfficeResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Escritório não encontrado"
+          }
+        }
+      },
+      "put": {
+        "security": [{"bearerAuth": []}],
+        "tags": ["Escritórios"],
+        "summary": "Atualizar escritório",
+        "description": "Atualiza os dados de um escritório específico. ADMIN pode atualizar todos os campos, OFFICE_OWNER pode atualizar apenas companyName do seu próprio escritório.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateOfficeInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Escritório atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/OfficeResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados de entrada inválidos"
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Não autorizado"
+          },
+          "404": {
+            "description": "Escritório não encontrado"
+          }
+        }
+      },
+      "delete": {
+        "security": [{"bearerAuth": []}],
+        "tags": ["Escritórios"],
+        "summary": "Excluir escritório",
+        "description": "Realiza a exclusão lógica de um escritório (requer autenticação como ADMIN)",
+        "responses": {
+          "200": {
+            "description": "Escritório excluído com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "null"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Não autorizado"
+          },
+          "404": {
+            "description": "Escritório não encontrado"
+          }
+        }
+      }
+    },
     "/api/auth/login": {
       "post": {
         "tags": ["Autenticação"],
@@ -195,6 +450,105 @@
   },
   "components": {
     "schemas": {
+      "CreateOfficeInput": {
+        "type": "object",
+        "required": ["number", "floor", "area", "ownerId"],
+        "properties": {
+          "number": {
+            "type": "string",
+            "description": "Número do escritório"
+          },
+          "floor": {
+            "type": "string",
+            "description": "Andar do escritório"
+          },
+          "area": {
+            "type": "number",
+            "description": "Área do escritório em metros quadrados"
+          },
+          "ownerId": {
+            "type": "string",
+            "description": "ID do usuário OFFICE_OWNER responsável pelo escritório"
+          },
+          "companyName": {
+            "type": "string",
+            "description": "Nome da empresa que ocupa o escritório"
+          }
+        }
+      },
+      "UpdateOfficeInput": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string",
+            "description": "Número do escritório"
+          },
+          "floor": {
+            "type": "string",
+            "description": "Andar do escritório"
+          },
+          "area": {
+            "type": "number",
+            "description": "Área do escritório em metros quadrados"
+          },
+          "ownerId": {
+            "type": "string",
+            "description": "ID do usuário OFFICE_OWNER responsável pelo escritório"
+          },
+          "companyName": {
+            "type": "string",
+            "description": "Nome da empresa que ocupa o escritório"
+          }
+        }
+      },
+      "OfficeResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "ID único do escritório"
+          },
+          "number": {
+            "type": "string",
+            "description": "Número do escritório"
+          },
+          "floor": {
+            "type": "string",
+            "description": "Andar do escritório"
+          },
+          "area": {
+            "type": "number",
+            "description": "Área do escritório em metros quadrados"
+          },
+          "ownerId": {
+            "type": "string",
+            "description": "ID do usuário OFFICE_OWNER responsável pelo escritório"
+          },
+          "companyName": {
+            "type": "string",
+            "description": "Nome da empresa que ocupa o escritório"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Status de ativação do escritório"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data de criação do escritório"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data da última atualização do escritório"
+          },
+          "deletedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data de exclusão do escritório (soft delete)"
+          }
+        }
+      },
       "LoginInput": {
         "type": "object",
         "required": ["email", "password"],
@@ -231,7 +585,7 @@
           },
           "role": {
             "type": "string",
-            "enum": ["ADMIN", "ATTENDANT"],
+            "enum": ["ADMIN", "ATTENDANT", "OFFICE_OWNER"],
             "default": "ATTENDANT",
             "description": "Papel do usuário no sistema"
           },
@@ -256,7 +610,7 @@
           },
           "role": {
             "type": "string",
-            "enum": ["ADMIN", "ATTENDANT"],
+            "enum": ["ADMIN", "ATTENDANT", "OFFICE_OWNER"],
             "description": "Papel do usuário no sistema"
           },
           "isActive": {
@@ -283,7 +637,7 @@
           },
           "role": {
             "type": "string",
-            "enum": ["ADMIN", "ATTENDANT"],
+            "enum": ["ADMIN", "ATTENDANT", "OFFICE_OWNER"],
             "description": "Papel do usuário no sistema"
           },
           "isActive": {
