@@ -8,7 +8,7 @@ declare global {
     interface Request {
       user?: {
         id: string;
-        email: string;
+        role: string;
       };
     }
   }
@@ -33,10 +33,13 @@ export const authenticate = (
     const decoded = jwt.verify(
       token,
       (process.env.JWT_SECRET || 'fallback-secret-key') as Secret
-    ) as { id: string; email: string };
+    ) as { userId: string; role: string };
     
     // Add user to request
-    req.user = decoded;
+    req.user = {
+      id: decoded.userId,
+      role: decoded.role
+    };
     next();
   } catch (error) {
     throw new AppError('Invalid token', 401);

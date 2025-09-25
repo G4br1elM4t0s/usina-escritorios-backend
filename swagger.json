@@ -7,12 +7,12 @@
   },
   "servers": [
     {
-      "url": "http://localhost:3000/api",
+      "url": "http://localhost:3000",
       "description": "Servidor de desenvolvimento"
     }
   ],
   "paths": {
-    "/auth/login": {
+    "/api/auth/login": {
       "post": {
         "tags": ["Autenticação"],
         "summary": "Autenticar usuário",
@@ -56,8 +56,9 @@
         }
       }
     },
-    "/users": {
+    "/api/users": {
       "get": {
+        "security": [{"bearerAuth": []}],
         "tags": ["Usuários"],
         "summary": "Listar usuários",
         "description": "Retorna a lista de todos os usuários",
@@ -108,7 +109,7 @@
         }
       }
     },
-    "/users/{id}": {
+    "/api/users/{id}": {
       "parameters": [
         {
           "name": "id",
@@ -121,6 +122,7 @@
         }
       ],
       "get": {
+        "security": [{"bearerAuth": []}],
         "tags": ["Usuários"],
         "summary": "Buscar usuário por ID",
         "description": "Retorna os dados de um usuário específico",
@@ -141,6 +143,7 @@
         }
       },
       "put": {
+        "security": [{"bearerAuth": []}],
         "tags": ["Usuários"],
         "summary": "Atualizar usuário",
         "description": "Atualiza os dados de um usuário específico",
@@ -174,6 +177,7 @@
         }
       },
       "delete": {
+        "security": [{"bearerAuth": []}],
         "tags": ["Usuários"],
         "summary": "Excluir usuário",
         "description": "Realiza a exclusão lógica de um usuário",
