@@ -9,6 +9,8 @@ import swaggerDocument from '../swagger.json';
 import authRoutes from './routes/authRoutes';
 import userRoutes from './routes/userRoutes';
 import officeRoutes from './routes/officeRoutes';
+import bookingRoutes from './routes/bookingRoutes';
+import availabilityRoutes from './routes/availabilityRoutes';
 import { errorHandler } from './middleware/errorHandler';
 import { requestLogger } from './middleware/requestLogger';
 
@@ -32,6 +34,8 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/offices', officeRoutes);
+app.use('/api/bookings', bookingRoutes);
+app.use('/api/offices/:id/availability', availabilityRoutes);
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });

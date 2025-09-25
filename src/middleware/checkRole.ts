@@ -30,6 +30,32 @@ export const checkAdminRole = async (
   next();
 };
 
+// Middleware genérico para verificar múltiplos roles
+export const checkRole = (allowedRoles: UserRole[]) => {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      throw new AppError('Usuário não autenticado', 401);
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+
+    if (!user) {
+      throw new AppError('Usuário não encontrado', 404);
+    }
+
+    if (!allowedRoles.includes(user.role)) {
+      throw new AppError('Acesso negado. Você não tem permissão para realizar esta ação', 403);
+    }
+
+    next();
+  };
+};
+
 export const checkCreateUserPermission = async (
   req: Request,
   res: Response,
