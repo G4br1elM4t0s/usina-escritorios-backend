@@ -446,6 +446,827 @@
           }
         }
       }
+    },
+    "/api/bookings": {
+      "get": {
+        "tags": ["Reservas"],
+        "summary": "Listar reservas",
+        "description": "Retorna a lista de reservas. Acesso público com filtros limitados, dados completos para usuários autenticados.",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Número da página",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "perPage",
+            "in": "query",
+            "description": "Itens por página",
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          },
+          {
+            "name": "officeId",
+            "in": "query",
+            "description": "Filtrar por ID do escritório",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filtrar por status da reserva",
+            "schema": {
+              "type": "string",
+              "enum": ["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED"]
+            }
+          },
+          {
+            "name": "startDate",
+            "in": "query",
+            "description": "Data de início para filtro (ISO 8601)",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "description": "Data de fim para filtro (ISO 8601)",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de reservas retornada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "bookings": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/BookingResponse"
+                          }
+                        },
+                        "pagination": {
+                          "$ref": "#/components/schemas/PaginationResponse"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Reservas"],
+        "summary": "Criar reserva",
+        "description": "Cria uma nova reserva. Pode ser feita por usuários autenticados ou visitantes públicos.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBookingInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Reserva criada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/BookingResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados de entrada inválidos"
+          },
+          "409": {
+            "description": "Conflito de horário"
+          }
+        }
+      }
+    },
+    "/api/bookings/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "ID da reserva",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "get": {
+        "tags": ["Reservas"],
+        "summary": "Buscar reserva por ID",
+        "description": "Retorna os dados de uma reserva específica. Visitantes podem acessar com email.",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "query",
+            "description": "Email do visitante (para acesso público)",
+            "schema": {
+              "type": "string",
+              "format": "email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reserva encontrada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/BookingResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Reserva não encontrada"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Reservas"],
+        "summary": "Atualizar reserva",
+        "description": "Atualiza uma reserva existente. Visitantes podem atualizar com email.",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "query",
+            "description": "Email do visitante (para acesso público)",
+            "schema": {
+              "type": "string",
+              "format": "email"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBookingInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Reserva atualizada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/BookingResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados de entrada inválidos"
+          },
+          "404": {
+            "description": "Reserva não encontrada"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Reservas"],
+        "summary": "Cancelar reserva",
+        "description": "Cancela uma reserva existente. Visitantes podem cancelar com email.",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "query",
+            "description": "Email do visitante (para acesso público)",
+            "schema": {
+              "type": "string",
+              "format": "email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reserva cancelada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "null"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Reserva não encontrada"
+          }
+        }
+      }
+    },
+    "/api/bookings/my": {
+      "get": {
+        "security": [{"bearerAuth": []}],
+        "tags": ["Reservas"],
+        "summary": "Minhas reservas",
+        "description": "Retorna as reservas do usuário autenticado",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Número da página",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "perPage",
+            "in": "query",
+            "description": "Itens por página",
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reservas do usuário retornadas com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "bookings": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/BookingResponse"
+                          }
+                        },
+                        "pagination": {
+                          "$ref": "#/components/schemas/PaginationResponse"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado"
+          }
+        }
+      }
+    },
+    "/api/bookings/{id}/confirm": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "ID da reserva",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "patch": {
+        "security": [{"bearerAuth": []}],
+        "tags": ["Reservas"],
+        "summary": "Confirmar reserva",
+        "description": "Confirma uma reserva pendente (requer autenticação como ADMIN, ATTENDANT ou OFFICE_OWNER)",
+        "responses": {
+          "200": {
+            "description": "Reserva confirmada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/BookingResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Não autorizado"
+          },
+          "404": {
+            "description": "Reserva não encontrada"
+          }
+        }
+      }
+    },
+    "/api/bookings/{id}/complete": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "ID da reserva",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "patch": {
+        "security": [{"bearerAuth": []}],
+        "tags": ["Reservas"],
+        "summary": "Completar reserva",
+        "description": "Marca uma reserva como completada (requer autenticação como ADMIN, ATTENDANT ou OFFICE_OWNER)",
+        "responses": {
+          "200": {
+            "description": "Reserva completada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/BookingResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Não autorizado"
+          },
+          "404": {
+            "description": "Reserva não encontrada"
+          }
+        }
+      }
+    },
+    "/api/offices/{id}/availability": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "ID do escritório",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "get": {
+        "tags": ["Disponibilidade"],
+        "summary": "Listar disponibilidades",
+        "description": "Retorna a lista de disponibilidades de um escritório",
+        "parameters": [
+          {
+            "name": "startDate",
+            "in": "query",
+            "description": "Data de início para filtro (ISO 8601)",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "description": "Data de fim para filtro (ISO 8601)",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de disponibilidades retornada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AvailabilityResponse"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "security": [{"bearerAuth": []}],
+        "tags": ["Disponibilidade"],
+        "summary": "Criar disponibilidade",
+        "description": "Cria uma nova disponibilidade para o escritório (requer autenticação como OFFICE_OWNER ou ADMIN)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAvailabilityInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Disponibilidade criada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AvailabilityResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados de entrada inválidos"
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Não autorizado"
+          },
+          "409": {
+            "description": "Conflito de horário"
+          }
+        }
+      }
+    },
+    "/api/offices/{officeId}/availability/{id}": {
+      "parameters": [
+        {
+          "name": "officeId",
+          "in": "path",
+          "required": true,
+          "description": "ID do escritório",
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "ID da disponibilidade",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "get": {
+        "tags": ["Disponibilidade"],
+        "summary": "Buscar disponibilidade por ID",
+        "description": "Retorna os dados de uma disponibilidade específica",
+        "responses": {
+          "200": {
+            "description": "Disponibilidade encontrada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AvailabilityResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Disponibilidade não encontrada"
+          }
+        }
+      },
+      "put": {
+        "security": [{"bearerAuth": []}],
+        "tags": ["Disponibilidade"],
+        "summary": "Atualizar disponibilidade",
+        "description": "Atualiza uma disponibilidade existente (requer autenticação como OFFICE_OWNER ou ADMIN)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAvailabilityInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Disponibilidade atualizada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AvailabilityResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados de entrada inválidos"
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Não autorizado"
+          },
+          "404": {
+            "description": "Disponibilidade não encontrada"
+          }
+        }
+      },
+      "delete": {
+        "security": [{"bearerAuth": []}],
+        "tags": ["Disponibilidade"],
+        "summary": "Excluir disponibilidade",
+        "description": "Exclui uma disponibilidade existente (requer autenticação como OFFICE_OWNER ou ADMIN)",
+        "responses": {
+          "200": {
+            "description": "Disponibilidade excluída com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "null"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Não autorizado"
+          },
+          "404": {
+            "description": "Disponibilidade não encontrada"
+          }
+        }
+      }
+    },
+    "/api/offices/{id}/availability/slots": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "ID do escritório",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "get": {
+        "tags": ["Disponibilidade"],
+        "summary": "Obter slots disponíveis",
+        "description": "Retorna os slots de tempo disponíveis para reserva em um período",
+        "parameters": [
+          {
+            "name": "startDate",
+            "in": "query",
+            "required": true,
+            "description": "Data de início para busca (ISO 8601)",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "required": true,
+            "description": "Data de fim para busca (ISO 8601)",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Slots disponíveis retornados com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AvailableSlot"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Parâmetros de data inválidos"
+          }
+        }
+      }
+    },
+    "/api/offices/{id}/availability/calendar": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "ID do escritório",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "get": {
+        "tags": ["Disponibilidade"],
+        "summary": "Visualização de calendário",
+        "description": "Retorna uma visualização de calendário com disponibilidades e reservas",
+        "parameters": [
+          {
+            "name": "month",
+            "in": "query",
+            "required": true,
+            "description": "Mês para visualização (1-12)",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 12
+            }
+          },
+          {
+            "name": "year",
+            "in": "query",
+            "required": true,
+            "description": "Ano para visualização",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Visualização de calendário retornada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/CalendarView"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Parâmetros de data inválidos"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -653,6 +1474,420 @@
             "type": "string",
             "format": "date-time",
             "description": "Data da última atualização do usuário"
+          }
+        }
+      },
+      "VisitorInput": {
+        "type": "object",
+        "required": ["name", "email", "phone"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Nome completo do visitante",
+            "minLength": 2,
+            "maxLength": 100
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Email do visitante"
+          },
+          "phone": {
+            "type": "string",
+            "description": "Telefone do visitante",
+            "pattern": "^\\+?[1-9]\\d{1,14}$"
+          },
+          "document": {
+            "type": "string",
+            "description": "Documento de identificação (CPF, RG, etc.)",
+            "maxLength": 20
+          },
+          "company": {
+            "type": "string",
+            "description": "Empresa do visitante",
+            "maxLength": 100
+          }
+        }
+      },
+      "VisitorResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "ID único do visitante"
+          },
+          "name": {
+            "type": "string",
+            "description": "Nome completo do visitante"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Email do visitante"
+          },
+          "phone": {
+            "type": "string",
+            "description": "Telefone do visitante"
+          },
+          "document": {
+            "type": "string",
+            "description": "Documento de identificação"
+          },
+          "company": {
+            "type": "string",
+            "description": "Empresa do visitante"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data de criação do visitante"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data da última atualização do visitante"
+          }
+        }
+      },
+      "CreateBookingInput": {
+        "type": "object",
+        "required": ["officeId", "startTime", "endTime", "visitor"],
+        "properties": {
+          "officeId": {
+            "type": "string",
+            "description": "ID do escritório a ser reservado"
+          },
+          "startTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data e hora de início da reserva (ISO 8601)"
+          },
+          "endTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data e hora de fim da reserva (ISO 8601)"
+          },
+          "purpose": {
+            "type": "string",
+            "description": "Propósito da visita",
+            "maxLength": 500
+          },
+          "notes": {
+            "type": "string",
+            "description": "Observações adicionais",
+            "maxLength": 1000
+          },
+          "visitor": {
+            "$ref": "#/components/schemas/VisitorInput"
+          }
+        }
+      },
+      "UpdateBookingInput": {
+        "type": "object",
+        "properties": {
+          "startTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data e hora de início da reserva (ISO 8601)"
+          },
+          "endTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data e hora de fim da reserva (ISO 8601)"
+          },
+          "purpose": {
+            "type": "string",
+            "description": "Propósito da visita",
+            "maxLength": 500
+          },
+          "notes": {
+            "type": "string",
+            "description": "Observações adicionais",
+            "maxLength": 1000
+          },
+          "visitor": {
+            "$ref": "#/components/schemas/VisitorInput"
+          }
+        }
+      },
+      "BookingResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "ID único da reserva"
+          },
+          "officeId": {
+            "type": "string",
+            "description": "ID do escritório reservado"
+          },
+          "office": {
+            "$ref": "#/components/schemas/OfficeResponse"
+          },
+          "visitorId": {
+            "type": "string",
+            "description": "ID do visitante"
+          },
+          "visitor": {
+            "$ref": "#/components/schemas/VisitorResponse"
+          },
+          "createdByUserId": {
+            "type": "string",
+            "description": "ID do usuário que criou a reserva"
+          },
+          "createdByUser": {
+            "$ref": "#/components/schemas/UserResponse"
+          },
+          "startTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data e hora de início da reserva"
+          },
+          "endTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data e hora de fim da reserva"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED"],
+            "description": "Status da reserva"
+          },
+          "purpose": {
+            "type": "string",
+            "description": "Propósito da visita"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Observações adicionais"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data de criação da reserva"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data da última atualização da reserva"
+          }
+        }
+      },
+      "CreateAvailabilityInput": {
+        "type": "object",
+        "required": ["startTime", "endTime"],
+        "properties": {
+          "startTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data e hora de início da disponibilidade (ISO 8601)"
+          },
+          "endTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data e hora de fim da disponibilidade (ISO 8601)"
+          },
+          "isRecurring": {
+            "type": "boolean",
+            "description": "Se a disponibilidade é recorrente",
+            "default": false
+          },
+          "recurringPattern": {
+            "type": "string",
+            "enum": ["DAILY", "WEEKLY", "MONTHLY"],
+            "description": "Padrão de recorrência (apenas se isRecurring for true)"
+          },
+          "recurringEndDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data de fim da recorrência (apenas se isRecurring for true)"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Observações sobre a disponibilidade",
+            "maxLength": 500
+          }
+        }
+      },
+      "UpdateAvailabilityInput": {
+        "type": "object",
+        "properties": {
+          "startTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data e hora de início da disponibilidade (ISO 8601)"
+          },
+          "endTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data e hora de fim da disponibilidade (ISO 8601)"
+          },
+          "isRecurring": {
+            "type": "boolean",
+            "description": "Se a disponibilidade é recorrente"
+          },
+          "recurringPattern": {
+            "type": "string",
+            "enum": ["DAILY", "WEEKLY", "MONTHLY"],
+            "description": "Padrão de recorrência"
+          },
+          "recurringEndDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data de fim da recorrência"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Observações sobre a disponibilidade",
+            "maxLength": 500
+          }
+        }
+      },
+      "AvailabilityResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "ID único da disponibilidade"
+          },
+          "officeId": {
+            "type": "string",
+            "description": "ID do escritório"
+          },
+          "office": {
+            "$ref": "#/components/schemas/OfficeResponse"
+          },
+          "startTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data e hora de início da disponibilidade"
+          },
+          "endTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data e hora de fim da disponibilidade"
+          },
+          "isRecurring": {
+            "type": "boolean",
+            "description": "Se a disponibilidade é recorrente"
+          },
+          "recurringPattern": {
+            "type": "string",
+            "enum": ["DAILY", "WEEKLY", "MONTHLY"],
+            "description": "Padrão de recorrência"
+          },
+          "recurringEndDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data de fim da recorrência"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Observações sobre a disponibilidade"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data de criação da disponibilidade"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data da última atualização da disponibilidade"
+          }
+        }
+      },
+      "AvailableSlot": {
+        "type": "object",
+        "properties": {
+          "startTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data e hora de início do slot disponível"
+          },
+          "endTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data e hora de fim do slot disponível"
+          },
+          "availabilityId": {
+            "type": "string",
+            "description": "ID da disponibilidade que originou este slot"
+          }
+        }
+      },
+      "CalendarView": {
+        "type": "object",
+        "properties": {
+          "month": {
+            "type": "integer",
+            "description": "Mês da visualização"
+          },
+          "year": {
+            "type": "integer",
+            "description": "Ano da visualização"
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "format": "date",
+                  "description": "Data do dia"
+                },
+                "availabilities": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AvailabilityResponse"
+                  }
+                },
+                "bookings": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BookingResponse"
+                  }
+                },
+                "hasAvailability": {
+                  "type": "boolean",
+                  "description": "Se o dia tem disponibilidade"
+                },
+                "hasBookings": {
+                  "type": "boolean",
+                  "description": "Se o dia tem reservas"
+                }
+              }
+            }
+          }
+        }
+      },
+      "PaginationResponse": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer",
+            "description": "Página atual"
+          },
+          "perPage": {
+            "type": "integer",
+            "description": "Itens por página"
+          },
+          "total": {
+            "type": "integer",
+            "description": "Total de itens"
+          },
+          "totalPages": {
+            "type": "integer",
+            "description": "Total de páginas"
+          },
+          "hasNext": {
+            "type": "boolean",
+            "description": "Se há próxima página"
+          },
+          "hasPrev": {
+            "type": "boolean",
+            "description": "Se há página anterior"
           }
         }
       }
