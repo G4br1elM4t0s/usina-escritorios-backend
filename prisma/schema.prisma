@@ -68,6 +68,7 @@ model Office {
 
   bookings     Booking[]
   tickets      SupportTicket[]
+  availability OfficeAvailability[]   // <<< relação com horários de disponibilidade
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -185,4 +186,19 @@ model TicketMessage {
 
   @@index([ticketId])
   @@index([authorId])
+}
+
+// ===== Disponibilidade do Office =====
+model OfficeAvailability {
+  id          String   @id @default(cuid())
+  officeId    String
+  office      Office   @relation(fields: [officeId], references: [id], onDelete: Cascade)
+
+  availableFrom DateTime
+  availableTo   DateTime
+
+  createdAt   DateTime @default(now())
+
+  @@index([officeId])
+  @@index([availableFrom, availableTo])
 }
