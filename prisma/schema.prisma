@@ -26,6 +26,13 @@ enum BookingStatus {
   COMPLETED
 }
 
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
 enum TicketStatus {
   OPEN
   IN_PROGRESS
@@ -68,6 +75,8 @@ model Office {
 
   bookings     Booking[]
   tickets      SupportTicket[]
+  appointments Appointment[]
+  availability OfficeAvailability[]
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -99,7 +108,8 @@ model Visitor {
   whatsapp  String?  // normalize só números no app
   notes     String?
 
-  bookings  Booking[]
+  bookings     Booking[]
+  appointments Appointment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -185,4 +195,40 @@ model TicketMessage {
 
   @@index([ticketId])
   @@index([authorId])
+}
+
+// ===== Agendamentos =====
+model Appointment {
+  id          String            @id @default(cuid())
+  officeId    String
+  visitorId   String
+  scheduledAt DateTime
+  status      AppointmentStatus @default(PENDING)
+
+  office      Office   @relation(fields: [officeId], references: [id], onDelete: Cascade)
+  visitor     Visitor  @relation(fields: [visitorId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([officeId])
+  @@index([visitorId])
+  @@index([scheduledAt])
+  @@index([status])
+}
+
+// ===== Disponibilidade de Escritórios =====
+model OfficeAvailability {
+  id            String   @id @default(cuid())
+  officeId      String
+  availableFrom DateTime
+  availableTo   DateTime
+
+  office        Office   @relation(fields: [officeId], references: [id], onDelete: Cascade)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([officeId])
+  @@index([availableFrom, availableTo])
 }

@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { appointmentService } from '../services/appointment.service';
 import { createAppointmentSchema, updateAppointmentSchema } from '../schemas/appointment.schema';
 import { AppError } from '../middleware/errorHandler';
-import { UserRole } from '@prisma/client';
+import { UserRole, AppointmentStatus } from '@prisma/client';
 
 export const appointmentController = {
   // POST /api/appointments - Criar appointment
@@ -97,7 +97,7 @@ export const appointmentController = {
       
       const appointment = await appointmentService.updateStatus(
         id,
-        validatedData.status,
+        validatedData.status as AppointmentStatus,
         user.id,
         user.role
       );

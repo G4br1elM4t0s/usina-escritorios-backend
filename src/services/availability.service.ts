@@ -12,14 +12,18 @@ export const availabilityService = {
     // Verificar se office existe e se o usuário é o owner
     const office = await prisma.office.findUnique({
       where: { id: officeId },
-      select: { id: true, ownerId: true, isActive: true }
+      include: {
+        owners: {
+          where: { userId }
+        }
+      }
     });
 
     if (!office) {
       throw new AppError('Office não encontrado', 404);
     }
 
-    if (office.ownerId !== userId) {
+    if (office.owners.length === 0) {
       throw new AppError('Apenas o proprietário do office pode criar disponibilidade', 403);
     }
 
@@ -104,14 +108,18 @@ export const availabilityService = {
     // Verificar se office existe e se o usuário é o owner
     const office = await prisma.office.findUnique({
       where: { id: officeId },
-      select: { id: true, ownerId: true }
+      include: {
+        owners: {
+          where: { userId }
+        }
+      }
     });
 
     if (!office) {
       throw new AppError('Office não encontrado', 404);
     }
 
-    if (office.ownerId !== userId) {
+    if (office.owners.length === 0) {
       throw new AppError('Apenas o proprietário do office pode deletar disponibilidade', 403);
     }
 

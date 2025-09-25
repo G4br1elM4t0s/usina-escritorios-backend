@@ -1,7 +1,7 @@
 import prisma from '../prisma/client';
 import { AppError } from '../middleware/errorHandler';
 import { CreateAppointmentInput, UpdateAppointmentInput } from '../schemas/appointment.schema';
-import { UserRole } from '@prisma/client';
+import { UserRole, AppointmentStatus } from '@prisma/client';
 
 export const appointmentService = {
   // Criar appointment com visitor automático
@@ -41,7 +41,7 @@ export const appointmentService = {
       where: {
         officeId,
         scheduledAt: scheduledDate,
-        status: { in: ['PENDING', 'CONFIRMED'] }
+        status: { in: [AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED] }
       }
     });
 
@@ -214,10 +214,19 @@ export const appointmentService = {
 
     // Verificar permissões se userId e userRole foram fornecidos
     if (userId && userRole) {
-      const canAccess = 
+      let canAccess = 
         userRole === 'ADMIN' ||
-        userRole === 'ATTENDANT' ||
-        (userRole === 'OFFICE_OWNER' && appointment.office.ownerId === userId);
+        userRole === 'ATTENDANT';
+      
+      if (!canAccess && userRole === 'OFFICE_OWNER') {
+        const officeOwner = await prisma.officeOwner.findFirst({
+          where: {
+            officeId: appointment.officeId,
+            userId
+          }
+        });
+        canAccess = !!officeOwner;
+      }
 
       if (!canAccess) {
         throw new AppError('Acesso negado', 403);
@@ -228,14 +237,23 @@ export const appointmentService = {
   },
 
   // Atualizar status do appointment
-  async updateStatus(id: string, status: string, userId: string, userRole: UserRole) {
+  async updateStatus(id: string, status: AppointmentStatus, userId: string, userRole: UserRole) {
     const appointment = await this.findById(id);
 
     // Verificar permissões para atualização
-    const canUpdate = 
+    let canUpdate = 
       userRole === 'ADMIN' ||
-      userRole === 'ATTENDANT' ||
-      (userRole === 'OFFICE_OWNER' && appointment.office.ownerId === userId);
+      userRole === 'ATTENDANT';
+    
+    if (!canUpdate && userRole === 'OFFICE_OWNER') {
+      const officeOwner = await prisma.officeOwner.findFirst({
+        where: {
+          officeId: appointment.officeId,
+          userId
+        }
+      });
+      canUpdate = !!officeOwner;
+    }
 
     if (!canUpdate) {
       throw new AppError('Você não tem permissão para atualizar este agendamento', 403);
@@ -264,10 +282,19 @@ export const appointmentService = {
     const appointment = await this.findById(id);
 
     // Verificar permissões para atualização
-    const canUpdate = 
+    let canUpdate = 
       userRole === 'ADMIN' ||
-      userRole === 'ATTENDANT' ||
-      (userRole === 'OFFICE_OWNER' && appointment.office.ownerId === userId);
+      userRole === 'ATTENDANT';
+    
+    if (!canUpdate && userRole === 'OFFICE_OWNER') {
+      const officeOwner = await prisma.officeOwner.findFirst({
+        where: {
+          officeId: appointment.officeId,
+          userId
+        }
+      });
+      canUpdate = !!officeOwner;
+    }
 
     if (!canUpdate) {
       throw new AppError('Você não tem permissão para atualizar este agendamento', 403);

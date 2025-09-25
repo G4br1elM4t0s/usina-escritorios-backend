@@ -8,8 +8,8 @@ export const createAppointmentSchema = z.object({
 });
 
 export const updateAppointmentSchema = z.object({
-  status: z.enum(['PENDING', 'CONFIRMED', 'CANCELLED'], {
-    errorMap: () => ({ message: 'Status deve ser PENDING, CONFIRMED ou CANCELLED' })
+  status: z.enum(['PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED'], {
+    errorMap: () => ({ message: 'Status deve ser PENDING, CONFIRMED, CANCELLED ou COMPLETED' })
   })
 });
 
