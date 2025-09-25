@@ -100,9 +100,9 @@ export const officeService = {
         number: data.number,
         companyName: data.companyName,
         owners: data.ownerId ? {
-          create: {
+          create: [{
             userId: data.ownerId
-          }
+          }]
         } : undefined
       },
       select: {
@@ -156,9 +156,9 @@ export const officeService = {
         ...data,
         owners: data.ownerId ? {
           deleteMany: {},
-          create: {
+          create: [{
             userId: data.ownerId
-          }
+          }]
         } : undefined
       },
       select: {

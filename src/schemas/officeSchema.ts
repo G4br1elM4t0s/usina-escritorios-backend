@@ -75,7 +75,6 @@ export const fullOfficeSelect = {
   id: true,
   number: true,
   companyName: true,
-  ownerId: true,
   isActive: true,
   createdAt: true,
   updatedAt: true,
