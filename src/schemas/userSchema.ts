@@ -1,21 +1,31 @@
 import { z } from 'zod';
+import { UserRole } from '@prisma/client';
 
-// User registration schema
-export const registerUserSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
-  email: z.string().email('Invalid email address'),
-  password: z
-    .string()
-    .min(6, 'Password must be at least 6 characters')
-    .max(100, 'Password is too long')
+// Schema base para validação de usuários (sem senha)
+const userBaseSchema = z.object({
+  name: z.string().min(1, 'Nome é obrigatório'),
+  email: z.string().email('Email inválido'),
+  role: z.nativeEnum(UserRole).default('ATTENDANT'),
+  isActive: z.boolean().default(true),
 });
 
-// User login schema
-export const loginUserSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(1, 'Password is required')
+// Schema para criação de usuário (inclui senha)
+export const createUserSchema = userBaseSchema.extend({
+  password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
 });
 
-// Types derived from schemas
-export type RegisterUserInput = z.infer<typeof registerUserSchema>;
-export type LoginUserInput = z.infer<typeof loginUserSchema>;
+// Schema para atualização de usuário (todos os campos são opcionais)
+export const updateUserSchema = userBaseSchema.partial();
+
+// Schema para resposta (remove campos sensíveis)
+export const userResponseSchema = userBaseSchema
+  .extend({
+    id: z.string(),
+    createdAt: z.date(),
+    updatedAt: z.date(),
+  });
+
+// Tipos inferidos dos schemas
+export type CreateUserInput = z.infer<typeof createUserSchema>;
+export type UpdateUserInput = z.infer<typeof updateUserSchema>;
+export type UserResponse = z.infer<typeof userResponseSchema>;

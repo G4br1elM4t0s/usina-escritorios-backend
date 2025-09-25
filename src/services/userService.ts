@@ -1,62 +1,137 @@
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
 import prisma from '../prisma/client';
-import { RegisterUserInput, LoginUserInput } from '../schemas/userSchema';
+import { CreateUserInput } from '../schemas/userSchema';
+import { Prisma } from '@prisma/client';
 import { AppError } from '../middleware/errorHandler';
 
-export const createUser = async (data: RegisterUserInput) => {
-  // Check if user already exists
-  const existingUser = await prisma.user.findUnique({
-    where: { email: data.email }
-  });
+export const userService = {
+  // Listar todos os usuários
+  async findAll() {
+    return prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+  },
 
-  if (existingUser) {
-    throw new AppError('User with this email already exists', 400);
-  }
+  // Buscar usuário por ID
+  async findById(id: string) {
+    const user = await prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
 
-  // Hash password
-  const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(data.password, salt);
-
-  // Create user
-  const user = await prisma.user.create({
-    data: {
-      name: data.name,
-      email: data.email,
-      password: hashedPassword
+    if (!user) {
+      throw new AppError('Usuário não encontrado', 404);
     }
-  });
 
-  // Return user without password
-  const { password, ...userWithoutPassword } = user;
-  return userWithoutPassword;
-};
+    return user;
+  },
 
-export const loginUser = async (data: LoginUserInput) => {
-  // Find user
-  const user = await prisma.user.findUnique({
-    where: { email: data.email }
-  });
+  // Criar novo usuário
+  async create(data: CreateUserInput) {
+    // Verificar se email já existe
+    const existingUser = await prisma.user.findUnique({
+      where: { email: data.email },
+    });
 
-  if (!user) {
-    throw new AppError('Invalid credentials', 401);
-  }
+    if (existingUser) {
+      throw new AppError('Email já cadastrado', 400);
+    }
 
-  // Check password
-  const isPasswordValid = await bcrypt.compare(data.password, user.password);
+    // Hash da senha
+    const passwordHash = await bcrypt.hash(data.password, 10);
 
-  if (!isPasswordValid) {
-    throw new AppError('Invalid credentials', 401);
-  }
+    // Criar usuário
+    const user = await prisma.user.create({
+      data: {
+        ...data,
+        passwordHash,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
 
-  // Generate JWT token
-  const token = jwt.sign(
-    { id: user.id, email: user.email },
-    process.env.JWT_SECRET || 'fallback-secret-key',
-    { expiresIn: (process.env.JWT_EXPIRES_IN || '1d') as any }
-  );
+    return user;
+  },
 
-  // Return user without password and token
-  const { password, ...userWithoutPassword } = user;
-  return { user: userWithoutPassword, token };
+  // Atualizar usuário
+  async update(id: string, data: Prisma.UserUpdateInput) {
+    // Verificar se usuário existe
+    const existingUser = await prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!existingUser) {
+      throw new AppError('Usuário não encontrado', 404);
+    }
+
+    // Verificar se email já existe (se estiver sendo atualizado)
+    const emailToUpdate = typeof data.email === 'string' ? data.email : data.email?.set;
+    if (emailToUpdate && emailToUpdate !== existingUser.email) {
+      const emailExists = await prisma.user.findUnique({
+        where: { email: emailToUpdate },
+      });
+
+      if (emailExists) {
+        throw new AppError('Email já cadastrado', 400);
+      }
+    }
+
+    // Atualizar usuário
+    const user = await prisma.user.update({
+      where: { id },
+      data,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    return user;
+  },
+
+  // Deletar usuário (soft delete)
+  async delete(id: string) {
+    // Verificar se usuário existe
+    const existingUser = await prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!existingUser) {
+      throw new AppError('Usuário não encontrado', 404);
+    }
+
+    // Soft delete
+    await prisma.user.update({
+      where: { id },
+      data: { isActive: false },
+    });
+  },
 };

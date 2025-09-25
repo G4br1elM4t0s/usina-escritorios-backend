@@ -6,19 +6,171 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
   // To use PostgreSQL instead, comment out the above and uncomment the below
   // provider = "postgresql"
   // url      = env("DATABASE_URL")
 }
+// ===== Enums =====
+enum UserRole {
+  ADMIN         // dono do prédio / superadmin
+  ATTENDANT     // atendente
+  OFFICE_OWNER  // dono/locatário da sala
+}
 
+enum BookingStatus {
+  REQUESTED
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+// ===== Usuários (internos) =====
 model User {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  password  String
-  createdAt DateTime @default(now()) @map("created_at")
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String
+  role          UserRole @default(ATTENDANT)
+  isActive      Boolean  @default(true)
 
-  @@map("users")
+  // segurança
+  passwordHash  String   // hash (ex.: bcrypt)
+
+  // relações auxiliares
+  createdBookings  Booking[]       @relation("BookingCreator")
+  createdTickets   SupportTicket[] @relation("TicketCreator")
+  ticketMessages   TicketMessage[]
+  ownedOffices     Office[]        @relation("OfficeOwner")
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([role])
+}
+
+// ===== Office (sala + empresa no MVP) =====
+model Office {
+  id           String   @id @default(cuid())
+  number       String   @unique       // número da sala
+  companyName  String                 // nome da empresa ocupante
+
+  ownerId      String?                // usuário com role = OFFICE_OWNER
+  owner        User?    @relation("OfficeOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+
+  isActive     Boolean  @default(true)
+
+  bookings     Booking[]
+  tickets      SupportTicket[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  deletedAt    DateTime?
+
+  @@index([ownerId])
+  @@index([isActive])
+  @@index([deletedAt])
+}
+
+// ===== Visitante (cliente do Office) - não precisa de conta =====
+model Visitor {
+  id        String   @id @default(cuid())
+  name      String
+  email     String?
+  whatsapp  String?  // normalize só números no app
+  notes     String?
+
+  bookings  Booking[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+  @@index([whatsapp])
+}
+
+// ===== Agenda =====
+model Booking {
+  id              String        @id @default(cuid())
+  officeId        String
+  createdByUserId String        // quem registrou (admin/atendente/owner)
+  status          BookingStatus @default(REQUESTED)
+
+  title           String?
+  description     String?
+  startAt         DateTime
+  endAt           DateTime
+
+  // ligação opcional a um visitante cadastrado
+  visitorId       String?
+  visitor         Visitor?      @relation(fields: [visitorId], references: [id], onDelete: SetNull)
+
+  // snapshot de contato (permite agendar sem Visitor)
+  visitorName     String?
+  visitorEmail    String?
+  visitorWhatsapp String?
+
+  needsSupport    Boolean?
+  notes           String?
+
+  office          Office        @relation(fields: [officeId], references: [id], onDelete: Cascade)
+  createdBy       User          @relation("BookingCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+
+  tickets         SupportTicket[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  deletedAt       DateTime?
+
+  @@index([officeId, startAt, endAt])
+  @@index([status])
+  @@index([visitorId])
+  @@index([deletedAt])
+}
+
+// ===== Suporte =====
+model SupportTicket {
+  id          String       @id @default(cuid())
+  officeId    String
+
+  title       String
+  description String?
+  status      TicketStatus @default(OPEN)
+
+  createdById String
+  office      Office       @relation(fields: [officeId], references: [id], onDelete: Cascade)
+  createdBy   User         @relation("TicketCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  booking     Booking?     @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  bookingId   String?
+
+  messages    TicketMessage[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  closedAt    DateTime?
+
+  @@index([officeId])
+  @@index([status])
+}
+
+model TicketMessage {
+  id        String        @id @default(cuid())
+  ticketId  String
+  authorId  String
+  body      String        @db.Text
+
+  ticket    SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  author    User          @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([ticketId])
+  @@index([authorId])
 }

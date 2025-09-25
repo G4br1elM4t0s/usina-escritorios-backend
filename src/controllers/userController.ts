@@ -1,31 +1,48 @@
 import { Request, Response } from 'express';
-import { registerUserSchema, loginUserSchema } from '../schemas/userSchema';
-import * as userService from '../services/userService';
+import { userService } from '../services/userService';
+import { createUserSchema, updateUserSchema } from '../schemas/userSchema';
 
-export const registerUser = async (req: Request, res: Response) => {
-  // Validate request body
-  const validatedData = registerUserSchema.parse(req.body);
-  
-  // Create user
-  const user = await userService.createUser(validatedData);
-  
-  // Return response
-  return res.status(201).json({
-    status: 'success',
-    data: { user }
-  });
-};
+export const userController = {
+  // Listar todos os usuários
+  async index(req: Request, res: Response) {
+    const users = await userService.findAll();
+    res.json(users);
+  },
 
-export const loginUser = async (req: Request, res: Response) => {
-  // Validate request body
-  const validatedData = loginUserSchema.parse(req.body);
-  
-  // Login user
-  const { user, token } = await userService.loginUser(validatedData);
-  
-  // Return response
-  return res.status(200).json({
-    status: 'success',
-    data: { user, token }
-  });
+  // Buscar usuário por ID
+  async show(req: Request, res: Response) {
+    const { id } = req.params;
+    const user = await userService.findById(id);
+    res.json(user);
+  },
+
+  // Criar novo usuário
+  async create(req: Request, res: Response) {
+    const data = createUserSchema.parse(req.body);
+    const user = await userService.create(data);
+    res.status(201).json({
+      message: 'Usuário criado com sucesso',
+      user,
+    });
+  },
+
+  // Atualizar usuário
+  async update(req: Request, res: Response) {
+    const { id } = req.params;
+    const validatedData = updateUserSchema.parse(req.body);
+    const user = await userService.update(id, validatedData as any);
+    res.json({
+      message: 'Usuário atualizado com sucesso',
+      user,
+    });
+  },
+
+  // Deletar usuário (soft delete)
+  async delete(req: Request, res: Response) {
+    const { id } = req.params;
+    await userService.delete(id);
+    res.json({
+      message: 'Usuário deletado com sucesso',
+    });
+  },
 };

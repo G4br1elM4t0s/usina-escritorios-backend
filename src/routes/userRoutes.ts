@@ -1,12 +1,15 @@
 import { Router } from 'express';
-import { registerUser } from '../controllers/userController';
+import { userController } from '../controllers/userController';
+import { authenticate } from '../middleware/authMiddleware';
+import { checkAdminRole, checkCreateUserPermission } from '../middleware/checkRole';
 
 const router = Router();
 
-// POST /api/users - Register a new user
-router.post('/', registerUser);
-
-// Add more user routes here (protected by authentication)
-// Example: router.get('/profile', authenticate, getUserProfile);
+// Rotas do CRUD de usuários
+router.get('/', authenticate, userController.index);
+router.get('/:id', authenticate, userController.show);
+router.post('/', authenticate, checkCreateUserPermission, userController.create);
+router.put('/:id', authenticate, checkAdminRole, userController.update);
+router.delete('/:id', authenticate, checkAdminRole, userController.delete);
 
 export default router;
