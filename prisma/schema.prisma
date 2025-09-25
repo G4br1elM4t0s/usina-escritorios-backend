@@ -113,7 +113,7 @@ model Visitor {
 model Booking {
   id              String        @id @default(cuid())
   officeId        String
-  createdByUserId String        // quem registrou (admin/atendente/owner)
+  createdByUserId String?       // quem registrou (admin/atendente/owner) - opcional para bookings públicos
   status          BookingStatus @default(REQUESTED)
 
   title           String?
@@ -134,7 +134,7 @@ model Booking {
   notes           String?
 
   office          Office        @relation(fields: [officeId], references: [id], onDelete: Cascade)
-  createdBy       User          @relation("BookingCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  createdBy       User?         @relation("BookingCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
 
   tickets         SupportTicket[]
 

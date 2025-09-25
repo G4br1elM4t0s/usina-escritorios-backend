@@ -8,10 +8,10 @@ export class BookingService {
    * Cria um novo booking com validações de negócio
    */
   async createBooking(data: CreateBookingDTO, createdByUserId?: string): Promise<Booking> {
-    const { officeId, startAt, endAt, visitor, visitorId, visitorName, visitorEmail, visitorWhatsapp, ...bookingData } = data;
+    const { officeId, startTime, endTime, visitor, visitorId, visitorName, visitorEmail, purpose, notes } = data;
     
-    const startDate = new Date(startAt);
-    const endDate = new Date(endAt);
+    const startDate = new Date(startTime);
+    const endDate = new Date(endTime);
     
     // 1. Verificar se o office existe e está ativo
     const office = await prisma.office.findFirst({
@@ -48,14 +48,24 @@ export class BookingService {
           } else {
             // Criar novo visitor
             const newVisitor = await prisma.visitor.create({
-              data: visitor
+              data: {
+                name: visitor.name,
+                email: visitor.email,
+                whatsapp: visitor.phone,
+                notes: `${visitor.document ? 'Doc: ' + visitor.document : ''}${visitor.company ? ' | Empresa: ' + visitor.company : ''}`
+              }
             });
             resolvedVisitorId = newVisitor.id;
           }
         } else {
           // Criar visitor sem email
           const newVisitor = await prisma.visitor.create({
-            data: visitor
+            data: {
+              name: visitor.name,
+              email: visitor.email,
+              whatsapp: visitor.phone,
+              notes: `${visitor.document ? 'Doc: ' + visitor.document : ''}${visitor.company ? ' | Empresa: ' + visitor.company : ''}`
+            }
           });
           resolvedVisitorId = newVisitor.id;
         }
@@ -63,19 +73,26 @@ export class BookingService {
     }
     
     // 5. Criar o booking
+    const bookingData: any = {
+      officeId,
+      startAt: startDate,
+      endAt: endDate,
+      visitorId: resolvedVisitorId,
+      visitorName: visitorName || visitor?.name,
+      visitorEmail: visitorEmail || visitor?.email,
+      visitorWhatsapp: visitor?.phone,
+      status: BookingStatus.REQUESTED,
+      title: purpose,
+      notes
+    };
+
+    // Adicionar createdByUserId apenas se houver usuário autenticado
+    if (createdByUserId) {
+      bookingData.createdByUserId = createdByUserId;
+    }
+
     const booking = await prisma.booking.create({
-      data: {
-        ...bookingData,
-        officeId,
-        startAt: startDate,
-        endAt: endDate,
-        visitorId: resolvedVisitorId,
-        visitorName: visitorName || visitor?.name,
-        visitorEmail: visitorEmail || visitor?.email,
-        visitorWhatsapp: visitorWhatsapp || visitor?.whatsapp,
-        createdByUserId: createdByUserId || 'system',
-        status: BookingStatus.REQUESTED
-      },
+      data: bookingData,
       include: {
         visitor: true,
         office: true,

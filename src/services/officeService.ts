@@ -99,7 +99,7 @@ export const officeService = {
       data: {
         number: data.number,
         companyName: data.companyName,
-        ...(data.ownerId && {
+        ...('ownerId' in data && data.ownerId && {
           owners: {
             create: {
               userId: data.ownerId
@@ -156,7 +156,7 @@ export const officeService = {
       where: { id },
       data: {
         ...data,
-        ...(data.ownerId && {
+        ...('ownerId' in data && data.ownerId && {
           owners: {
             deleteMany: {},
             create: {

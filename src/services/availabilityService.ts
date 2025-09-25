@@ -16,8 +16,8 @@ export class AvailabilityService {
     // Verificar permissões - apenas OFFICE_OWNER pode criar
     await this.validateOfficeOwnership(officeId, userId, userRole);
     
-    const availableFrom = new Date(data.availableFrom);
-    const availableTo = new Date(data.availableTo);
+    const availableFrom = new Date(data.startTime);
+    const availableTo = new Date(data.endTime);
     
     // Verificar se o office existe e está ativo
     const office = await prisma.office.findFirst({
@@ -153,16 +153,16 @@ export class AvailabilityService {
     }
     
     // Se estiver alterando datas, validar sobreposições
-    if (data.availableFrom || data.availableTo) {
-      const availableFrom = data.availableFrom ? new Date(data.availableFrom) : existingAvailability.availableFrom;
-      const availableTo = data.availableTo ? new Date(data.availableTo) : existingAvailability.availableTo;
+    if (data.startTime || data.endTime) {
+      const availableFrom = data.startTime ? new Date(data.startTime) : existingAvailability.availableFrom;
+      const availableTo = data.endTime ? new Date(data.endTime) : existingAvailability.availableTo;
       
       await this.validateOverlap(officeId, availableFrom, availableTo, availabilityId);
     }
     
     const updatedData: any = {};
-    if (data.availableFrom) updatedData.availableFrom = new Date(data.availableFrom);
-    if (data.availableTo) updatedData.availableTo = new Date(data.availableTo);
+    if (data.startTime) updatedData.availableFrom = new Date(data.startTime);
+    if (data.endTime) updatedData.availableTo = new Date(data.endTime);
     
     const availability = await prisma.officeAvailability.update({
       where: { id: availabilityId },

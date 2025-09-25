@@ -28,8 +28,44 @@ async function main() {
     } else {
       console.log('Usuário admin já existe');
     }
+
+    // Criar disponibilidades de exemplo para o office
+    const officeId = 'cmfywwan10000tixfggqfutzh';
+    
+    // Verificar se o office existe
+    const office = await prisma.office.findUnique({
+      where: { id: officeId }
+    });
+
+    if (office) {
+      // Verificar se já existem disponibilidades
+      const existingAvailability = await prisma.officeAvailability.findFirst({
+        where: { officeId }
+      });
+
+      if (!existingAvailability) {
+        // Criar disponibilidade para hoje e próximos 30 dias
+        const today = new Date();
+        const endDate = new Date(today);
+        endDate.setDate(today.getDate() + 30);
+
+        await prisma.officeAvailability.create({
+          data: {
+            officeId,
+            availableFrom: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 8, 0, 0), // 8:00 AM
+            availableTo: new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate(), 18, 0, 0), // 6:00 PM
+          }
+        });
+
+        console.log('Disponibilidade criada para o office:', officeId);
+      } else {
+        console.log('Disponibilidade já existe para o office:', officeId);
+      }
+    } else {
+      console.log('Office não encontrado:', officeId);
+    }
   } catch (error) {
-    console.error('Erro ao criar usuário admin:', error);
+    console.error('Erro no seed:', error);
     process.exit(1);
   } finally {
     await prisma.$disconnect();

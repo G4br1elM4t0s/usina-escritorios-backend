@@ -2,36 +2,44 @@ import { z } from 'zod';
 
 // Schema para criação de OfficeAvailability
 export const createAvailabilitySchema = z.object({
-  availableFrom: z.string().datetime('Data de início deve ser um datetime válido (ISO)'),
-  availableTo: z.string().datetime('Data de fim deve ser um datetime válido (ISO)')
+  startTime: z.string().datetime('Data de início deve ser um datetime válido (ISO)'),
+  endTime: z.string().datetime('Data de fim deve ser um datetime válido (ISO)'),
+  isRecurring: z.boolean().optional().default(false),
+  recurringPattern: z.enum(['DAILY', 'WEEKLY', 'MONTHLY']).optional(),
+  recurringEndDate: z.string().datetime().optional(),
+  notes: z.string().optional()
 }).refine(
   (data) => {
-    const availableFrom = new Date(data.availableFrom);
-    const availableTo = new Date(data.availableTo);
-    return availableTo > availableFrom;
+    const startTime = new Date(data.startTime);
+    const endTime = new Date(data.endTime);
+    return endTime > startTime;
   },
   {
     message: 'Data de fim deve ser posterior à data de início',
-    path: ['availableTo']
+    path: ['endTime']
   }
 );
 
 // Schema para atualização de OfficeAvailability
 export const updateAvailabilitySchema = z.object({
-  availableFrom: z.string().datetime('Data de início deve ser um datetime válido (ISO)').optional(),
-  availableTo: z.string().datetime('Data de fim deve ser um datetime válido (ISO)').optional()
+  startTime: z.string().datetime('Data de início deve ser um datetime válido (ISO)').optional(),
+  endTime: z.string().datetime('Data de fim deve ser um datetime válido (ISO)').optional(),
+  isRecurring: z.boolean().optional(),
+  recurringPattern: z.enum(['DAILY', 'WEEKLY', 'MONTHLY']).optional(),
+  recurringEndDate: z.string().datetime().optional(),
+  notes: z.string().optional()
 }).refine(
   (data) => {
-    if (data.availableFrom && data.availableTo) {
-      const availableFrom = new Date(data.availableFrom);
-      const availableTo = new Date(data.availableTo);
-      return availableTo > availableFrom;
+    if (data.startTime && data.endTime) {
+      const startTime = new Date(data.startTime);
+      const endTime = new Date(data.endTime);
+      return endTime > startTime;
     }
     return true;
   },
   {
     message: 'Data de fim deve ser posterior à data de início',
-    path: ['availableTo']
+    path: ['endTime']
   }
 );
 

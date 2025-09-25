@@ -5,11 +5,9 @@ import { createVisitorSchema } from './visitorSchema';
 // Schema para criação de Booking
 export const createBookingSchema = z.object({
   officeId: z.string().cuid('Office ID deve ser um CUID válido'),
-  startAt: z.string().datetime('Data de início deve ser um datetime válido (ISO)'),
-  endAt: z.string().datetime('Data de fim deve ser um datetime válido (ISO)'),
-  title: z.string().optional(),
-  description: z.string().optional(),
-  needsSupport: z.boolean().optional(),
+  startTime: z.string().datetime('Data de início deve ser um datetime válido (ISO)'),
+  endTime: z.string().datetime('Data de fim deve ser um datetime válido (ISO)'),
+  purpose: z.string().optional(),
   notes: z.string().optional(),
   
   // Visitor pode ser criado inline ou referenciado por ID
@@ -18,22 +16,21 @@ export const createBookingSchema = z.object({
   
   // Snapshot de contato (permite agendar sem Visitor cadastrado)
   visitorName: z.string().optional(),
-  visitorEmail: z.string().email().optional(),
-  visitorWhatsapp: z.string().optional()
+  visitorEmail: z.string().email().optional()
 }).refine(
   (data) => {
-    const startAt = new Date(data.startAt);
-    const endAt = new Date(data.endAt);
-    return endAt > startAt;
+    const startTime = new Date(data.startTime);
+    const endTime = new Date(data.endTime);
+    return endTime > startTime;
   },
   {
     message: 'Data de fim deve ser posterior à data de início',
-    path: ['endAt']
+    path: ['endTime']
   }
 ).refine(
   (data) => {
     // Deve ter visitor OU visitorId OU snapshot de contato
-    return data.visitor || data.visitorId || (data.visitorName && (data.visitorEmail || data.visitorWhatsapp));
+    return data.visitor || data.visitorId || (data.visitorName && data.visitorEmail);
   },
   {
     message: 'Deve informar dados do visitante (visitor, visitorId ou snapshot de contato)',
@@ -53,8 +50,7 @@ export const updateBookingSchema = z.object({
   
   // Campos de snapshot podem ser atualizados
   visitorName: z.string().optional(),
-  visitorEmail: z.string().email().optional(),
-  visitorWhatsapp: z.string().optional()
+  visitorEmail: z.string().email().optional()
 });
 
 // Schema para query parameters de listagem
