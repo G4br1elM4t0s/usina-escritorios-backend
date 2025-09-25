@@ -6,7 +6,7 @@ import { UserRole } from '@prisma/client';
 export const officeController = {
   // Listar escritórios
   async index(req: Request, res: Response) {
-    const query = officeQuerySchema.parse(req.query);
+    const query = await officeQuerySchema.parseAsync(req.query);
     const userRole = req.user?.role;
     const userId = req.user?.id;
 
@@ -34,7 +34,7 @@ export const officeController = {
 
   // Criar escritório
   async create(req: Request, res: Response) {
-    const data = createOfficeSchema.parse(req.body);
+    const data = await createOfficeSchema.parseAsync(req.body);
 
     const office = await officeService.create(data);
 
@@ -52,8 +52,8 @@ export const officeController = {
 
     // Validar dados baseado no papel do usuário
     const data = userRole === UserRole.ADMIN
-      ? updateOfficeAdminSchema.parse(req.body)
-      : updateOfficeOwnerSchema.parse(req.body);
+      ? await updateOfficeAdminSchema.parseAsync(req.body)
+      : await updateOfficeOwnerSchema.parseAsync(req.body);
 
     const office = await officeService.update(id, data, userRole!, userId!);
 
