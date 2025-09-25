@@ -5,6 +5,28 @@
     "version": "1.0.0",
     "description": "API para gerenciamento de usuários da Usina Escritórios"
   },
+  "tags": [
+    {
+      "name": "Autenticação",
+      "description": "Endpoints relacionados à autenticação de usuários"
+    },
+    {
+      "name": "Usuários",
+      "description": "Operações CRUD para usuários"
+    },
+    {
+      "name": "Escritórios",
+      "description": "Operações CRUD para escritórios"
+    },
+    {
+      "name": "Agendamentos",
+      "description": "Operações para gerenciar agendamentos de visitantes"
+    },
+    {
+      "name": "Disponibilidade",
+      "description": "Operações para gerenciar disponibilidade de escritórios"
+    }
+  ],
   "servers": [
     {
       "url": "http://localhost:3000",
@@ -380,21 +402,33 @@
       "get": {
         "security": [{"bearerAuth": []}],
         "tags": ["Usuários"],
-        "summary": "Buscar usuário por ID",
-        "description": "Retorna os dados de um usuário específico (requer autenticação como ADMIN)",
+        "summary": "Obter usuário por ID",
+        "description": "Retorna os dados de um usuário específico (requer autenticação)",
         "responses": {
           "200": {
-            "description": "Usuário encontrado com sucesso",
+            "description": "Dados do usuário retornados com sucesso",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserResponse"
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/UserResponse"
+                    }
+                  }
                 }
               }
             }
           },
           "404": {
             "description": "Usuário não encontrado"
+          },
+          "401": {
+            "description": "Token de acesso inválido ou expirado"
           }
         }
       },
@@ -443,6 +477,358 @@
           },
           "404": {
             "description": "Usuário não encontrado"
+          }
+        }
+      }
+    },
+    "/api/appointments": {
+      "post": {
+        "tags": ["Agendamentos"],
+        "summary": "Criar agendamento",
+        "description": "Cria um novo agendamento (público - não requer autenticação)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAppointmentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Agendamento criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AppointmentResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados inválidos ou horário não disponível"
+          },
+          "409": {
+            "description": "Já existe um agendamento neste horário"
+          }
+        }
+      },
+      "get": {
+        "security": [{"bearerAuth": []}],
+        "tags": ["Agendamentos"],
+        "summary": "Listar agendamentos",
+        "description": "Lista agendamentos baseado no role do usuário (requer autenticação)",
+        "responses": {
+          "200": {
+            "description": "Lista de agendamentos retornada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AppointmentResponse"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token de acesso inválido ou expirado"
+          }
+        }
+      }
+    },
+    "/api/appointments/{id}": {
+      "get": {
+        "security": [{"bearerAuth": []}],
+        "tags": ["Agendamentos"],
+        "summary": "Obter agendamento por ID",
+        "description": "Retorna os dados de um agendamento específico (requer autenticação)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID do agendamento",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dados do agendamento retornados com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AppointmentResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Agendamento não encontrado"
+          },
+          "403": {
+            "description": "Acesso negado"
+          },
+          "401": {
+            "description": "Token de acesso inválido ou expirado"
+          }
+        }
+      },
+      "put": {
+        "security": [{"bearerAuth": []}],
+        "tags": ["Agendamentos"],
+        "summary": "Atualizar status do agendamento",
+        "description": "Atualiza o status de um agendamento (requer autenticação e permissões)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID do agendamento",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAppointmentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Status do agendamento atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AppointmentResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Agendamento não encontrado"
+          },
+          "403": {
+            "description": "Você não tem permissão para atualizar este agendamento"
+          },
+          "401": {
+            "description": "Token de acesso inválido ou expirado"
+          }
+        }
+      }
+    },
+    "/api/offices/{id}/availability": {
+      "post": {
+        "security": [{"bearerAuth": []}],
+        "tags": ["Disponibilidade"],
+        "summary": "Criar disponibilidade",
+        "description": "Cria uma nova disponibilidade para o escritório (apenas OFFICE_OWNER)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID do escritório",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAvailabilityRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Disponibilidade criada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AvailabilityResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados inválidos ou escritório não ativo"
+          },
+          "403": {
+            "description": "Apenas o proprietário do escritório pode criar disponibilidade"
+          },
+          "409": {
+            "description": "Já existe uma disponibilidade que sobrepõe este período"
+          },
+          "401": {
+            "description": "Token de acesso inválido ou expirado"
+          }
+        }
+      },
+      "get": {
+        "tags": ["Disponibilidade"],
+        "summary": "Listar disponibilidades",
+        "description": "Lista as disponibilidades de um escritório (público)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID do escritório",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de disponibilidades retornada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AvailabilityResponse"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Escritório não encontrado"
+          }
+        }
+      }
+    },
+    "/api/offices/{id}/availability/{availId}": {
+      "delete": {
+        "security": [{"bearerAuth": []}],
+        "tags": ["Disponibilidade"],
+        "summary": "Deletar disponibilidade",
+        "description": "Remove uma disponibilidade do escritório (apenas OFFICE_OWNER)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID do escritório",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "availId",
+            "in": "path",
+            "required": true,
+            "description": "ID da disponibilidade",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Disponibilidade removida com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string",
+                          "example": "Disponibilidade removida com sucesso"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Escritório ou disponibilidade não encontrado"
+          },
+          "403": {
+            "description": "Apenas o proprietário do escritório pode deletar disponibilidade"
+          },
+          "401": {
+            "description": "Token de acesso inválido ou expirado"
           }
         }
       }
@@ -653,6 +1039,157 @@
             "type": "string",
             "format": "date-time",
             "description": "Data da última atualização do usuário"
+          }
+        }
+      },
+      "VisitorRequest": {
+        "type": "object",
+        "required": ["name", "email", "whatsapp"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Maria Santos"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "maria@exemplo.com"
+          },
+          "whatsapp": {
+            "type": "string",
+            "example": "+5511999999999"
+          }
+        }
+      },
+      "CreateAppointmentRequest": {
+        "type": "object",
+        "required": ["officeId", "scheduledAt", "visitor"],
+        "properties": {
+          "officeId": {
+            "type": "string",
+            "example": "60d5ecb74b24a1234567890b"
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-25T14:30:00.000Z"
+          },
+          "visitor": {
+            "$ref": "#/components/schemas/VisitorRequest"
+          }
+        }
+      },
+      "UpdateAppointmentRequest": {
+        "type": "object",
+        "required": ["status"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED"],
+            "example": "CONFIRMED"
+          }
+        }
+      },
+      "AppointmentResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "60d5ecb74b24a1234567890c"
+          },
+          "officeId": {
+            "type": "string",
+            "example": "60d5ecb74b24a1234567890b"
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-25T14:30:00.000Z"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED"],
+            "example": "PENDING"
+          },
+          "visitor": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "example": "60d5ecb74b24a1234567890d"
+              },
+              "name": {
+                "type": "string",
+                "example": "Maria Santos"
+              },
+              "email": {
+                "type": "string",
+                "example": "maria@exemplo.com"
+              },
+              "whatsapp": {
+                "type": "string",
+                "example": "+5511999999999"
+              }
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-25T10:30:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-25T10:30:00.000Z"
+          }
+        }
+      },
+      "CreateAvailabilityRequest": {
+        "type": "object",
+        "required": ["availableFrom", "availableTo"],
+        "properties": {
+          "availableFrom": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-25T09:00:00.000Z"
+          },
+          "availableTo": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-25T18:00:00.000Z"
+          }
+        }
+      },
+      "AvailabilityResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "60d5ecb74b24a1234567890e"
+          },
+          "officeId": {
+            "type": "string",
+            "example": "60d5ecb74b24a1234567890b"
+          },
+          "availableFrom": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-25T09:00:00.000Z"
+          },
+          "availableTo": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-25T18:00:00.000Z"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-25T08:30:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-25T08:30:00.000Z"
           }
         }
       }
