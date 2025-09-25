@@ -48,7 +48,7 @@ model User {
   createdBookings  Booking[]       @relation("BookingCreator")
   createdTickets   SupportTicket[] @relation("TicketCreator")
   ticketMessages   TicketMessage[]
-  ownedOffices     Office[]        @relation("OfficeOwner")
+  ownedOffices     OfficeOwner[]
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -62,8 +62,7 @@ model Office {
   number       String   @unique       // número da sala
   companyName  String                 // nome da empresa ocupante
 
-  ownerId      String?                // usuário com role = OFFICE_OWNER
-  owner        User?    @relation("OfficeOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  owners       OfficeOwner[]
 
   isActive     Boolean  @default(true)
 
@@ -74,9 +73,22 @@ model Office {
   updatedAt    DateTime @updatedAt
   deletedAt    DateTime?
 
-  @@index([ownerId])
   @@index([isActive])
   @@index([deletedAt])
+}
+
+// ===== Relacionamento many-to-many entre Office e User (OFFICE_OWNER) =====
+model OfficeOwner {
+  id        String   @id @default(cuid())
+  officeId  String
+  userId    String
+  office    Office   @relation(fields: [officeId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([officeId, userId])
+  @@index([officeId])
+  @@index([userId])
 }
 
 // ===== Visitante (cliente do Office) - não precisa de conta =====

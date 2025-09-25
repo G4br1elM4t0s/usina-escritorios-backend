@@ -57,7 +57,7 @@ export const officeService = {
     // Selecionar campos baseado no papel do usuário
     const select = userRole === UserRole.ADMIN || 
       (userRole === UserRole.OFFICE_OWNER && userId) ? 
-      fullOfficeSelect : 
+      { ...fullOfficeSelect, owners: { select: { userId: true } } } : 
       publicOfficeSelect;
 
     const office = await prisma.office.findUnique({
@@ -70,7 +70,8 @@ export const officeService = {
     }
 
     // Verificar se é um office owner tentando acessar outro escritório
-    if (userRole === UserRole.OFFICE_OWNER && office.ownerId !== userId) {
+    if (userRole === UserRole.OFFICE_OWNER && 
+        !office.owners?.some(owner => owner.userId === userId)) {
       // Se for owner mas não for dono deste escritório, retorna apenas dados públicos
       return {
         id: office.id,
@@ -93,10 +94,25 @@ export const officeService = {
       throw new AppError('Número de escritório já cadastrado', 400);
     }
 
-    // Criar escritório
+    // Criar escritório e associar owner(s)
     const office = await prisma.office.create({
-      data,
-      select: fullOfficeSelect,
+      data: {
+        number: data.number,
+        companyName: data.companyName,
+        owners: data.ownerId ? {
+          create: {
+            userId: data.ownerId
+          }
+        } : undefined
+      },
+      select: {
+        ...fullOfficeSelect,
+        owners: {
+          select: {
+            userId: true
+          }
+        }
+      },
     });
 
     return office;
@@ -107,7 +123,14 @@ export const officeService = {
     // Verificar se escritório existe
     const office = await prisma.office.findUnique({
       where: { id },
-      select: { ...fullOfficeSelect, ownerId: true },
+      select: {
+        ...fullOfficeSelect,
+        owners: {
+          select: {
+            userId: true
+          }
+        }
+      },
     });
 
     if (!office) {
@@ -116,21 +139,36 @@ export const officeService = {
 
     // Verificar permissões
     if (userRole === UserRole.OFFICE_OWNER) {
-      if (office.ownerId !== userId) {
+      if (!office.owners?.some(owner => owner.userId === userId)) {
         throw new AppError('Você só pode editar seu próprio escritório', 403);
       }
 
       // Office Owner só pode atualizar companyName
       if ('ownerId' in data) {
-        throw new AppError('Você não tem permissão para alterar o proprietário', 403);
+        throw new AppError('Você não tem permissão para alterar os proprietários', 403);
       }
     }
 
     // Atualizar escritório
     const updatedOffice = await prisma.office.update({
       where: { id },
-      data,
-      select: fullOfficeSelect,
+      data: {
+        ...data,
+        owners: data.ownerId ? {
+          deleteMany: {},
+          create: {
+            userId: data.ownerId
+          }
+        } : undefined
+      },
+      select: {
+        ...fullOfficeSelect,
+        owners: {
+          select: {
+            userId: true
+          }
+        }
+      },
     });
 
     return updatedOffice;
