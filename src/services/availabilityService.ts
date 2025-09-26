@@ -1,5 +1,6 @@
 import { PrismaClient, UserRole, OfficeAvailability } from '@prisma/client';
 import { CreateAvailabilityDTO, UpdateAvailabilityDTO, ListAvailabilityQuery } from '../schemas/availabilitySchema';
+import { AppError } from '../middleware/errorHandler';
 import prisma from '../prisma/client';
 
 export class AvailabilityService {
@@ -149,7 +150,7 @@ export class AvailabilityService {
     const existingAvailability = await this.getAvailabilityById(officeId, availabilityId);
     
     if (!existingAvailability) {
-      throw new Error('Disponibilidade não encontrada');
+      throw new AppError('Disponibilidade não encontrada', 404);
     }
     
     // Se estiver alterando datas, validar sobreposições
@@ -196,7 +197,7 @@ export class AvailabilityService {
     const availability = await this.getAvailabilityById(officeId, availabilityId);
     
     if (!availability) {
-      throw new Error('Disponibilidade não encontrada');
+      throw new AppError('Disponibilidade não encontrada', 404);
     }
     
     // Verificar se há bookings dependentes desta disponibilidade
@@ -211,7 +212,7 @@ export class AvailabilityService {
     });
     
     if (dependentBookings) {
-      throw new Error('Não é possível remover disponibilidade com agendamentos ativos');
+      throw new AppError('Não é possível remover disponibilidade com agendamentos ativos', 400);
     }
     
     await prisma.officeAvailability.delete({
@@ -342,7 +343,7 @@ export class AvailabilityService {
     });
     
     if (overlapping) {
-      throw new Error('Já existe uma disponibilidade que sobrepõe este horário');
+      throw new AppError('Já existe uma disponibilidade que sobrepõe este horário', 400);
     }
   }
 }

@@ -1,5 +1,6 @@
 import { PrismaClient, BookingStatus, UserRole, Booking, Visitor } from '@prisma/client';
 import { CreateBookingDTO, UpdateBookingDTO, ListBookingsQuery } from '../schemas/bookingSchema';
+import { AppError } from '../middleware/errorHandler';
 import prisma from '../prisma/client';
 
 export class BookingService {
@@ -23,7 +24,7 @@ export class BookingService {
     });
     
     if (!office) {
-      throw new Error('Office não encontrado ou inativo');
+      throw new AppError('Office não encontrado ou inativo', 404);
     }
     
     // 2. Verificar se o intervalo está dentro de uma disponibilidade
@@ -288,7 +289,7 @@ export class BookingService {
     const booking = await this.getBookingById(id, userRole, userId, visitorEmail);
     
     if (!booking) {
-      throw new Error('Booking não encontrado ou sem permissão');
+      throw new AppError('Booking não encontrado ou sem permissão', 404);
     }
     
     // Validar permissões para mudança de status
@@ -322,7 +323,7 @@ export class BookingService {
     });
     
     if (!availability) {
-      throw new Error('Horário solicitado não está disponível para este office');
+      throw new AppError('Horário solicitado não está disponível para este office', 400);
     }
   }
   
@@ -346,7 +347,7 @@ export class BookingService {
     });
     
     if (conflictingBooking) {
-      throw new Error('Já existe um agendamento confirmado ou solicitado neste horário');
+      throw new AppError('Já existe um agendamento confirmado ou solicitado neste horário', 409);
     }
   }
   
@@ -372,10 +373,10 @@ export class BookingService {
               }
             });
             if (!isOwner) {
-              throw new Error('Apenas proprietários do office podem confirmar agendamentos');
+              throw new AppError('Apenas proprietários do office podem confirmar agendamentos', 403);
             }
           } else {
-            throw new Error('Sem permissão para confirmar agendamentos');
+            throw new AppError('Sem permissão para confirmar agendamentos', 403);
           }
         }
         break;
@@ -390,27 +391,27 @@ export class BookingService {
               }
             });
             if (!isOwner) {
-              throw new Error('Apenas proprietários do office podem cancelar agendamentos');
+              throw new AppError('Apenas proprietários do office podem cancelar agendamentos', 403);
             }
           } else if (!userRole && visitorEmail) {
             // Visitante pode cancelar apenas seus próprios bookings
             if (booking.visitorEmail !== visitorEmail && booking.visitor?.email !== visitorEmail) {
-              throw new Error('Você só pode cancelar seus próprios agendamentos');
+              throw new AppError('Você só pode cancelar seus próprios agendamentos', 403);
             }
           } else {
-            throw new Error('Sem permissão para cancelar agendamentos');
+            throw new AppError('Sem permissão para cancelar agendamentos', 403);
           }
         }
         break;
         
       case BookingStatus.COMPLETED:
         if (![UserRole.ADMIN, UserRole.ATTENDANT].includes(userRole as any)) {
-          throw new Error('Apenas administradores e atendentes podem marcar como concluído');
+          throw new AppError('Apenas administradores e atendentes podem marcar como concluído', 403);
         }
         break;
         
       default:
-        throw new Error('Status inválido');
+        throw new AppError('Status inválido', 400);
     }
   }
 }
